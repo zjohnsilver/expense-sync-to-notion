@@ -1,0 +1,11 @@
+[project]
+name = "notion-finance-dashboard"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13.0"
+dependencies = [
+    "dotenv>=0.9.9",
+    "notion-client>=2.3.0",
+    "pandas>=2.3.0",
+]
