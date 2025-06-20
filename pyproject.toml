@@ -8,4 +8,5 @@ dependencies = [
     "dotenv>=0.9.9",
     "notion-client>=2.3.0",
     "pandas>=2.3.0",
+    "requests>=2.32.4",
 ]
