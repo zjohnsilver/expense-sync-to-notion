@@ -5,7 +5,7 @@ import pandas as pd
 import requests
 from notion_client import Client
 
-from envs import NOTION_SECRET
+from src.envs import NOTION_SECRET
 
 
 class NotionAPIGateway:
@@ -86,7 +86,7 @@ class NotionAPIGateway:
         }
 
 
-def _get_notion_category(row: dict) -> str:
+def _get_notion_category(row: pd.Series) -> str:
     inter_category = row["Categoria"]
     title = row["Lançamento"]
 

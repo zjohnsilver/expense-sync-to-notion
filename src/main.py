@@ -2,8 +2,8 @@ from pprint import pprint
 
 import pandas as pd
 
-from envs import FINANCE_DASHBOARD_ID, MONTHLY_INVOICE_FILENAME
-from notion_gateway import NotionAPIGateway
+from src.envs import FINANCE_DASHBOARD_ID, MONTHLY_INVOICE_FILENAME
+from src.notion_gateway import NotionAPIGateway
 
 notion_api_gateway = NotionAPIGateway()
 
