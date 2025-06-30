@@ -21,3 +21,14 @@ Run the script
 ```sh
 python main.py
 ```
+
+## This project uses gitmoji
+
+Gitmoji: https://gitmoji.dev/
+
+- ✨ feat
+- 🐛 fix
+- ♻️ refactor
+- 📝 docs
+- 🔧 chore
+- ✅ test
