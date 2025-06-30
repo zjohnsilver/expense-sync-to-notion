@@ -72,9 +72,7 @@ class NotionAPIGateway:
             "properties": {
                 "Month": {"select": {"name": _format_month(date_obj)}},
                 "Title": {"title": [{"text": {"content": row["Lançamento"]}}]},
-                "Category": {
-                    "select": {"name": _get_notion_category(row["Categoria"])}
-                },
+                "Category": {"select": {"name": _get_notion_category(row)}},
                 "Value": {
                     "number": float(
                         str(row["Valor"]).replace("R$", "").replace(",", ".")
@@ -89,9 +87,10 @@ class NotionAPIGateway:
 
 
 def _get_notion_category(row: dict) -> str:
-    is_amazon = "AMAZON" in row["Lançamento"]
+    inter_category = row["Categoria"]
+    title = row["Lançamento"]
 
-    if is_amazon:
+    if "AMAZON" in title:
         return "Amazon"
 
     DEFAULT_CATEGORY = "UNASSIGNED"
@@ -99,8 +98,6 @@ def _get_notion_category(row: dict) -> str:
         "SUPERMERCADO": "Supermarket",
         "DROGARIA": "Health",
     }
-
-    inter_category = row["Categoria"]
     return INTER_TO_NOTION_CATEGORY_MAP.get(inter_category, DEFAULT_CATEGORY)
 
 
