@@ -58,11 +58,6 @@ class NotionAPIGateway:
         response = requests.post(url, headers=self.headers, json=payload)
         if response.status_code != 200:
             print(f"Failed: {response.status_code}, {response.text}")
-        else:
-            print(
-                "Inserted:",
-                payload["properties"]["Title"]["title"][0]["text"]["content"],
-            )
 
     @staticmethod
     def build_payload(database_id: str, row: pd.Series) -> dict:
@@ -71,7 +66,9 @@ class NotionAPIGateway:
             "parent": {"database_id": database_id},
             "properties": {
                 "Month": {"select": {"name": _format_month(date_obj)}},
-                "Title": {"title": [{"text": {"content": row["Lançamento"]}}]},
+                "Bank Description": {
+                    "rich_text": [{"text": {"content": row["Lançamento"]}}]
+                },
                 "Category": {"select": {"name": _get_notion_category(row)}},
                 "Value": {
                     "number": float(
