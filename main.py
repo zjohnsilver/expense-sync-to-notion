@@ -5,7 +5,7 @@ from pathlib import Path
 
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == "--streamlit":
-        streamlit_app_path = Path(__file__).parent / "src" / "streamlit_app.py"
+        streamlit_app_path = Path(__file__).parent / "src" / "streamlit_app" / "app.py"
         subprocess.run(
             [sys.executable, "-m", "streamlit", "run", str(streamlit_app_path)]
         )
@@ -22,7 +22,7 @@ def main():
         print("")
         print("🚀 Launching Streamlit interface...")
 
-        streamlit_app_path = Path(__file__).parent / "src" / "streamlit_app.py"
+        streamlit_app_path = Path(__file__).parent / "src" / "streamlit_app" / "app.py"
         subprocess.run(
             [sys.executable, "-m", "streamlit", "run", str(streamlit_app_path)]
         )
