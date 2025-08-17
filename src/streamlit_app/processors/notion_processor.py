@@ -26,8 +26,14 @@ def transform_data_for_notion(df: pd.DataFrame) -> pd.DataFrame:
 
                 category = _get_notion_category(row)
 
+                # Support negative/positive values with comma decimals
                 value = float(
-                    str(row["Valor"]).replace("R$", "").replace(",", ".").strip()
+                    str(row["Valor"])  # type: ignore
+                    .replace("R$", "")
+                    .replace(" ", "")
+                    .replace(".", "")
+                    .replace(",", ".")
+                    .strip()
                 )
 
                 preview_data.append(
@@ -37,7 +43,9 @@ def transform_data_for_notion(df: pd.DataFrame) -> pd.DataFrame:
                         "Category": category,
                         "Value": f"R$ {value:.2f}".replace(".", ","),
                         "Date": date_obj.strftime("%d/%m/%Y"),
-                        "Payment": "CREDIT_CARD",
+                        "Payment": st.session_state.get(
+                            "default_payment_method", "CREDIT_CARD"
+                        ),
                         "Type": "NON-ESSENTIAL",
                         "SOURCE": "AUTOMATION",
                     }

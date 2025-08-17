@@ -10,4 +10,5 @@ dependencies = [
     "pandas>=2.3.0",
     "requests>=2.32.4",
     "streamlit>=1.39.0",
+    "watchdog>=6.0.0",
 ]

@@ -21,8 +21,14 @@ def display_notion_data_editor(df: pd.DataFrame) -> pd.DataFrame:
     if notion_data.empty:
         return df
 
+    # Add 1-based line numbers for easy error mapping
+    notion_data_to_edit = notion_data.copy()
+    if notion_data_to_edit.index.min() == 0:
+        notion_data_to_edit.index = notion_data_to_edit.index + 1
+    notion_data_to_edit.index.name = "Line"
+
     edited_notion_df = st.data_editor(
-        notion_data,
+        notion_data_to_edit,
         use_container_width=True,
         num_rows="dynamic",
         column_config={
@@ -68,6 +74,7 @@ def display_notion_data_editor(df: pd.DataFrame) -> pd.DataFrame:
             ),
         },
         key="notion_data_editor",
+        hide_index=False,
     )
 
     st.session_state.edited_notion_data = edited_notion_df
