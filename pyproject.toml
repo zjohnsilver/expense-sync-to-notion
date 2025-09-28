@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13.0"
 dependencies = [
+    "click>=8.2.1",
     "dotenv>=0.9.9",
     "notion-client>=2.3.0",
     "pandas>=2.3.0",

@@ -1,25 +1,53 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
 from datetime import datetime
-from typing import cast
+from typing import Any, TypedDict, cast
 
 import pandas as pd
-import requests
 from notion_client import Client
 
 from src.envs import NOTION_SECRET
 
+from src.enums import PaymentTypeEnum
+
+
+@dataclass
+class ExpenseRow:
+    date: datetime
+    description: str
+    category: str
+    value: float
+    payment: str
+    type_: str
+    source: str = "AUTOMATION"
+
+    @classmethod
+    def from_series(cls, row: pd.Series, payment_type: PaymentTypeEnum) -> "ExpenseRow":
+        return cls(
+            date=datetime.strptime(row["Data"], "%d/%m/%Y"),
+            description=str(row["Lançamento"]),
+            category=row.get("NewCategory") or row.get("Categoria") or "UNASSIGNED",
+            value=float(
+                str(row["Valor"]).replace("R$", "").replace(".", "").replace(",", ".")
+            ),
+            payment=payment_type.value,
+            type_="NON-ESSENTIAL",
+        )
+
+
+class NotionPayload(TypedDict):
+    parent: dict[str, str]
+    properties: dict[str, Any]
+
 
 class NotionAPIGateway:
-    def __init__(self):
+    def __init__(self) -> None:
         self._notion_client = Client(auth=NOTION_SECRET)
-        self.headers = {
-            "Authorization": f"Bearer {NOTION_SECRET}",
-            "Content-Type": "application/json",
-            "Notion-Version": "2022-06-28",
-        }
 
     def get_database_all(self, database_id: str) -> pd.DataFrame:
-        all_results = []
-        next_cursor = None
+        all_results: list[dict[str, Any]] = []
+        next_cursor: str | None = None
 
         while True:
             response = (
@@ -30,11 +58,11 @@ class NotionAPIGateway:
                 )
                 if next_cursor
                 else self._notion_client.databases.query(
-                    database_id=database_id, page_size=100
+                    database_id=database_id,
+                    page_size=100,
                 )
             )
             response = cast(dict, response)
-
             all_results.extend(response["results"])
 
             if response.get("has_more"):
@@ -45,81 +73,64 @@ class NotionAPIGateway:
         data = []
         for page in all_results:
             props = page["properties"]
-            row = {
-                key: _extract_property_value(value)
-                for key, value in props.items()
-            }
+            row = {key: _extract_property_value(value) for key, value in props.items()}
             data.append(row)
 
         return pd.DataFrame(data)
 
-    def insert_row_to_notion(self, payload: dict):
-        url = "https://api.notion.com/v1/pages"
-        response = requests.post(url, headers=self.headers, json=payload)
-        if response.status_code != 200:
-            print(f"Failed: {response.status_code}, {response.text}")
+    def send_row_to_notion(self, database_id: str, expense: ExpenseRow) -> None:
+        payload = self.build_payload(database_id, expense)
+        self._notion_client.pages.create(**payload)
+
+    def send_payloads(self, payloads: list[NotionPayload]) -> None:
+        for idx, payload in enumerate(payloads, start=1):
+            print("\n" + "-" * 200 + "\n")
+            print(f"[{idx}] Sending payload -> {payload}")
+            try:
+                self._notion_client.pages.create(**payload)
+                # pass
+            except Exception as e:
+                print(f"[{idx}] Failed to send: {e}")
 
     @staticmethod
-    def build_payload(database_id: str, row: pd.Series) -> dict:
-        date_obj = datetime.strptime(row["Data"], "%d/%m/%Y")
+    def build_payload(database_id: str, expense: ExpenseRow) -> NotionPayload:
         return {
             "parent": {"database_id": database_id},
             "properties": {
-                "Month": {"select": {"name": _format_month(date_obj)}},
+                "Month": {"select": {"name": _format_month(expense.date)}},
                 "Bank Description": {
-                    "rich_text": [{"text": {"content": row["Lançamento"]}}]
+                    "rich_text": [{"text": {"content": expense.description}}]
                 },
-                "Category": {"select": {"name": _get_notion_category(row)}},
-                "Value": {
-                    "number": float(
-                        str(row["Valor"]).replace("R$", "").replace(",", ".")
-                    )
-                },
-                "Date": {"date": {"start": date_obj.strftime("%Y-%m-%d")}},
-                "Payment": {"select": {"name": "CREDIT_CARD"}},
-                "Type": {"select": {"name": "NON-ESSENTIAL"}},
-                "SOURCE": {"select": {"name": "AUTOMATION"}},
+                "Category": {"select": {"name": expense.category}},
+                "Value": {"number": expense.value},
+                "Date": {"date": {"start": expense.date.strftime("%Y-%m-%d")}},
+                "Payment": {"select": {"name": expense.payment}},
+                "Type": {"select": {"name": expense.type_}},
+                "SOURCE": {"select": {"name": expense.source}},
             },
         }
 
 
-def _get_notion_category(row: pd.Series) -> str:
-    inter_category = row["Categoria"]
-    title = row["Lançamento"]
-
-    if "AMAZON" in title:
-        return "Amazon"
-
-    DEFAULT_CATEGORY = "UNASSIGNED"
-    INTER_TO_NOTION_CATEGORY_MAP = {
-        "SUPERMERCADO": "Supermarket",
-        "DROGARIA": "Health",
-    }
-    return INTER_TO_NOTION_CATEGORY_MAP.get(inter_category, DEFAULT_CATEGORY)
-
-
 def _format_month(date: datetime) -> str:
-    return date.strftime("%m - %b").upper()
+    # return date.strftime("%m - %b").upper()
+    return "10 - OCT"
 
 
-def _extract_property_value(prop):
-    type_ = prop["type"]
-
-    if type_ == "title":
-        return prop["title"][0]["plain_text"] if prop["title"] else None
-    elif type_ == "rich_text":
-        return (
-            prop["rich_text"][0]["plain_text"] if prop["rich_text"] else None
-        )
-    elif type_ == "number":
-        return prop["number"]
-    elif type_ == "select":
-        return prop["select"]["name"] if prop["select"] else None
-    elif type_ == "multi_select":
-        return [s["name"] for s in prop["multi_select"]]
-    elif type_ == "date":
-        return prop["date"]["start"] if prop["date"] else None
-    elif type_ == "formula":
-        return prop["formula"].get("string") or prop["formula"].get("number")
-    else:
-        return str(prop.get(type_))
+def _extract_property_value(prop: dict[str, Any]) -> Any:
+    match prop["type"]:
+        case "title":
+            return prop["title"][0]["plain_text"] if prop["title"] else None
+        case "rich_text":
+            return prop["rich_text"][0]["plain_text"] if prop["rich_text"] else None
+        case "number":
+            return prop["number"]
+        case "select":
+            return prop["select"]["name"] if prop["select"] else None
+        case "multi_select":
+            return [s["name"] for s in prop["multi_select"]]
+        case "date":
+            return prop["date"]["start"] if prop["date"] else None
+        case "formula":
+            return prop["formula"].get("string") or prop["formula"].get("number")
+        case _:
+            return str(prop.get(prop["type"]))

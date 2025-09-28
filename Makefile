@@ -1,32 +1,25 @@
-.PHONY: run run-streamlit run-cli setup install
+.PHONY: run streamlit cli setup install
 
-setup:
-	@if [ ! -f .env ]; then \
-		cp .env.example .env; \
-		echo "Created .env file from .env.example"; \
-		echo "Please edit .env file with your configuration"; \
+ENV_FILE = .env
+PYTHON   = python
+
+$(ENV_FILE):
+	@if [ ! -f $(ENV_FILE) ]; then \
+		cp .env.example $(ENV_FILE); \
+		echo "Created $(ENV_FILE) from .env.example"; \
+		echo "Please edit $(ENV_FILE) with your configuration"; \
 	else \
-		echo ".env file already exists"; \
+		echo "$(ENV_FILE) already exists"; \
 	fi
+
+setup: $(ENV_FILE)
 	uv sync
 
-run:
-	@if [ ! -f .env ]; then \
-		echo "Error: .env file not found. Run 'make setup' first"; \
-		exit 1; \
-	fi
-	python main.py
+run: $(ENV_FILE)
+	$(PYTHON) -m src.main
 
-run-streamlit:
-	@if [ ! -f .env ]; then \
-		echo "Error: .env file not found. Run 'make setup' first"; \
-		exit 1; \
-	fi
-	python main.py --streamlit
+streamlit: $(ENV_FILE)
+	$(PYTHON) -m src.main streamlit
 
-run-cli:
-	@if [ ! -f .env ]; then \
-		echo "Error: .env file not found. Run 'make setup' first"; \
-		exit 1; \
-	fi
-	python main.py --cli
+sync_expenses: $(ENV_FILE)
+	$(PYTHON) -m src.main sync

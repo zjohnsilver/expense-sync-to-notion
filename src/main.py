@@ -1,24 +1,30 @@
-import pandas as pd
+import subprocess
+import sys
+from pathlib import Path
 
-from src.envs import FINANCE_DASHBOARD_ID, MONTHLY_INVOICE_FILENAME
-from src.notion_gateway import NotionAPIGateway
+import click
+
+from src.notion_sync_expenses.notion_sync_service import NotionSyncService
 
 
-def main():
-    notion_api_gateway = NotionAPIGateway()
+@click.group()
+def cli():
+    """💰 Expense Sync to Notion CLI."""
 
-    if not FINANCE_DASHBOARD_ID:
-        raise ValueError("Finance dashboard ID not provided")
 
-    if not MONTHLY_INVOICE_FILENAME:
-        raise ValueError("Filename it's not provided")
+@cli.command()
+def streamlit():
+    """Launch the Streamlit interface."""
+    streamlit_app_path = Path(__file__).parent / "streamlit_app" / "app.py"
+    subprocess.run([sys.executable, "-m", "streamlit", "run", str(streamlit_app_path)])
 
-    monthly_invoice_df = pd.read_csv(MONTHLY_INVOICE_FILENAME, sep=",")
 
-    for _, row in monthly_invoice_df.iterrows():
-        payload = NotionAPIGateway.build_payload(
-            database_id=FINANCE_DASHBOARD_ID, row=row
-        )
-        notion_api_gateway.insert_row_to_notion(payload)
+@cli.command()
+def sync():
+    """Run direct sync (send expenses to Notion)."""
+    notion_sync_service = NotionSyncService()
+    notion_sync_service.sync_expenses()
 
-    print(monthly_invoice_df)
+
+if __name__ == "__main__":
+    cli()

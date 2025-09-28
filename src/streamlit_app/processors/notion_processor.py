@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 
 from src.envs import FINANCE_DASHBOARD_ID
-from src.notion_gateway import NotionAPIGateway, _get_notion_category
+from src.notion_gateway import NotionAPIGateway
 
 
 def transform_data_for_notion(df: pd.DataFrame) -> pd.DataFrame:
@@ -24,8 +24,6 @@ def transform_data_for_notion(df: pd.DataFrame) -> pd.DataFrame:
                 date_obj = datetime.strptime(row["Data"], "%d/%m/%Y")
                 month = date_obj.strftime("%m - %b").upper()
 
-                category = _get_notion_category(row)
-
                 # Support negative/positive values with comma decimals
                 value = float(
                     str(row["Valor"])  # type: ignore
@@ -40,7 +38,7 @@ def transform_data_for_notion(df: pd.DataFrame) -> pd.DataFrame:
                     {
                         "Month": month,
                         "Bank Description": row["Lançamento"],
-                        "Category": category,
+                        "Category": row["Categoria"],
                         "Value": f"R$ {value:.2f}".replace(".", ","),
                         "Date": date_obj.strftime("%d/%m/%Y"),
                         "Payment": st.session_state.get(

@@ -284,6 +284,7 @@ name = "notion-finance-dashboard"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "click" },
     { name = "dotenv" },
     { name = "notion-client" },
     { name = "pandas" },
@@ -294,6 +295,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "click", specifier = ">=8.2.1" },
     { name = "dotenv", specifier = ">=0.9.9" },
     { name = "notion-client", specifier = ">=2.3.0" },
     { name = "pandas", specifier = ">=2.3.0" },
