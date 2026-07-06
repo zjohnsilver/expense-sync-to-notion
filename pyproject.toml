@@ -9,6 +9,7 @@ dependencies = [
     "dotenv>=0.9.9",
     "notion-client>=2.3.0",
     "pandas>=2.3.0",
+    "pytest>=8.4.2",
     "requests>=2.32.4",
     "streamlit>=1.39.0",
     "watchdog>=6.0.0",
